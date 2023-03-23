@@ -94,6 +94,56 @@ app.get('/data/prestamo/:id', function(req, res) {
     });
 });
 
+app.delete('/delete/sucursal', function(req, res) {
+  const { id, region } = req.body;
+  oracledb.getConnection(
+    dbConfig,
+    function(err, connection) {
+      if (err) {
+        console.error(err.message);
+        return res.status(500).json({ error: err.message });
+      }
+      console.log('Connection was successful!');
+      connection.execute(
+        'BEGIN delete_sucursal(:id, :region); END;',
+        { id: id, region: region },
+        function(err, res) {
+          if (err) {
+            console.error(err.message);
+            doRelease(connection);
+            return res.status(500).json({ error: err.message });
+          }
+          else {
+            doRelease(connection);
+            return res.status(200).json({ message: `Sucursal with ID ${id} and region ${region} has been deleted` });
+          }
+        });
+    });
+});
+
+app.delete('/delete/prestamo', function(req, res) {
+    const { id, sucursal } = req.body;
+    oracledb.getConnection(
+      dbConfig,
+      function(err, connection) {
+        if (err) {
+          console.error(err.message);
+          return;
+        }
+        console.log('Connection was successful!');
+        connection.execute(
+          'BEGIN delete_prestamo(:id, :sucursal); END;', { id: id, sucursal: sucursal },
+          function(err, result) {
+            if (err) {
+              console.error(err.message);
+              doRelease(connection);
+              return;
+            }
+            doRelease(connection);
+        });
+    });
+});
+
 app.get('/data/prestamototal/:id', function(req, res) {
   console.log(req.params.id)
   oracledb.getConnection(
